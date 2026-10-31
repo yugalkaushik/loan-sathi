@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+*.db
+.pytest_cache/
+
+# NOTE: data/audio/*.wav is deliberately NOT ignored.
+# The pre-rendered Hindi demo audio is the offline fallback - it must be committed.

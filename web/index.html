@@ -1,0 +1,276 @@
+<!-- Loan Saathi, merchant-facing demo UI.
+     Left column is a phone frame: what the merchant sees inside Paytm for Business.
+     Right column is the data panel: what the deterministic engine computed, so an audience can
+     watch the merchant's screen and the evidence behind it at once. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loan Saathi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<!-- Icon set. Inline stroke SVG, referenced with <use>, so there are no image requests. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="i-sound" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 9v6h3l4.5 3.5V5.5L7 9H4z"/><path d="M15 9.5a3.5 3.5 0 0 1 0 5"/><path d="M17.5 7a7 7 0 0 1 0 10"/>
+    </g>
+    <g id="i-mic" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/>
+    </g>
+    <g id="i-stop" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="7" y="7" width="10" height="10" rx="1.5"/>
+    </g>
+    <g id="i-check" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/>
+    </g>
+    <g id="i-alert" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3.8L21 19.5H3L12 3.8z"/><path d="M12 9.5v4.2"/><path d="M12 16.6h.01"/>
+    </g>
+    <g id="i-eye" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/>
+    </g>
+    <g id="i-arrow" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12h15"/><path d="M13.5 6.5L19.5 12l-6 5.5"/>
+    </g>
+    <g id="i-info" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6h.01"/>
+    </g>
+    <g id="i-doc" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/>
+      <path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/>
+    </g>
+  </defs>
+</svg>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <div class="logo">
+      <span class="logo-a">Loan Saathi</span>
+    </div>
+    <div class="sp"></div>
+    <div class="langs" role="group" aria-label="Language">
+      <button id="lang-hi" aria-pressed="true">हिंदी</button>
+      <button id="lang-en" aria-pressed="false">English</button>
+    </div>
+  </div>
+</header>
+
+<main class="grid">
+
+  <!-- ===================================================== merchant's phone -->
+  <div class="phone">
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>Paytm Business</span></div>
+
+      <div class="appbar">
+        <div class="appbar-row">
+          <div>
+            <div class="shop" id="m-name">&nbsp;</div>
+            <div class="shop-sub" id="m-meta">&nbsp;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feed">
+        <section class="offer">
+          <div class="offer-hd">
+            <div class="offer-eyebrow">Your loan offer</div>
+            <div class="offer-sum num" id="o-amount">&nbsp;</div>
+            <div class="offer-by" id="o-lender">&nbsp;</div>
+          </div>
+          <dl class="offer-tb">
+            <div><dt id="l-daily">Daily</dt><dd class="num" id="o-daily">&nbsp;</dd></div>
+            <div><dt id="l-tenure">Tenure</dt><dd class="num" id="o-tenure">&nbsp;</dd></div>
+            <div><dt id="l-total">Total payable</dt><dd class="num" id="o-total">&nbsp;</dd></div>
+          </dl>
+        </section>
+
+        <section class="reply" aria-live="polite">
+          <div class="reply-hd" id="reply-hd">Loan Saathi</div>
+          <div class="reply-txt wait" id="say">Loading</div>
+          <div class="reply-ft">
+            <button class="btn btn-line btn-sm" id="btn-play">
+              <svg class="i"><use href="#i-sound"/></svg><span id="btn-play-t">सुनें</span>
+            </button>
+            <span class="tag" id="tag-src">Your assistant</span>
+          </div>
+        </section>
+
+        <section>
+          <div class="tiles" id="tiles"></div>
+        </section>
+      </div>
+
+        <div class="actions dock">
+          <button class="btn btn-line" id="btn-doc">
+            <svg class="i"><use href="#i-doc"/></svg>            <span id="btn-doc-t">Upload loan document</span>
+          </button>
+          <input type="file" id="doc-file" accept="application/pdf,image/*" hidden>
+          <button class="btn btn-cyan" id="btn-accept">
+            <span id="btn-accept-t">यह लोन लें</span>
+          </button>
+        </div>
+
+      <div class="chips" id="chips"></div>
+      <div class="ask">
+        <input id="ask" autocomplete="off" aria-label="Ask Loan Saathi">
+        <button class="mic" id="btn-mic" aria-label="Ask by voice">
+          <svg class="mic-icon i" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mic"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================== data panel -->
+  <div class="right">
+
+    <section class="sec sec-risk" id="risk-sec">
+      <div class="sec-hd">
+        <h2>Will the repayment fit your business?</h2>
+        <p>See how this offer holds up across the full repayment period, using your own recent
+           sales pattern.</p>
+      </div>
+      <div class="sec-bd" id="risk-body">
+        <div class="docbox"><span class="spin"></span>Running the simulation.</div>
+      </div>
+    </section>
+
+    <section class="sec sec-stress">
+      <div class="sec-hd">
+        <h2>Try a slower sales month</h2>
+        <p>Move the slider to see whether the daily instalment still fits when your sales are lower.</p>
+      </div>
+      <div class="sec-bd">
+        <div class="sl-hd">
+          <span class="lbl">If sales fall by</span>
+          <b class="num" id="shock-out">0%</b>
+          <span class="sp"></span>
+          <div class="presets" id="presets" role="group" aria-label="Preset sales drop">
+            <button data-pct="0" aria-pressed="true">0%</button>
+            <button data-pct="30" aria-pressed="false">30%</button>
+            <button data-pct="50" aria-pressed="false">50%</button>
+          </div>
+        </div>
+        <input type="range" id="shock" min="0" max="60" step="5" value="0" aria-label="Sales drop percentage">
+        <div class="ticks"><span>0%</span><span>30%</span><span>60%</span></div>
+
+        <div class="figs" id="figs" style="margin-top:18px"></div>
+
+        <div class="chart-wrap">
+          <svg class="chart" id="chart" viewBox="0 0 720 150" preserveAspectRatio="none" role="img"
+               aria-label="Daily settlement across 90 days against the daily installment"></svg>
+          <div class="chart-ax"><span id="ax-hi"></span><span id="ax-mid"></span><span>0</span></div>
+        </div>
+        <div class="key">
+          <span><i style="background:#00baf2"></i>money received after payments</span>
+          <span><i style="background:#c2780c"></i>day the debit could not be met</span>
+          <span><i class="line" style="background:#c9362c"></i>installment, <span class="num" id="key-emi"></span></span>
+        </div>
+      </div>
+      <p class="footnote">
+        <strong>Daily money received</strong> means the amount deposited after customer payments.
+        We use the average of the last 90 days. “Burden” means how much of that average the
+        instalment uses. These are estimates to help you decide, not a lender approval.
+      </p>
+    </section>
+
+    <section class="sec sec-rightsize">
+      <div class="sec-hd">
+        <h2>Find a safer amount</h2>
+        <p>Get a smaller suggestion if the current instalment feels too high for a slower month.</p>
+      </div>
+      <div class="sec-bd">
+        <div class="btns">
+          <button class="btn btn-fill" id="btn-rs">Suggest a smaller loan</button>
+          <button class="btn btn-line" id="btn-reset" hidden>Back to the original offer</button>
+        </div>
+        <div id="rs-out" style="margin-top:18px">
+          <div class="blank">
+            At a 30% fall in sales the current offer takes 16.7% of an average day. Run this to see
+            the largest loan that stays under the comfort ceiling, with the installment it implies.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec-loan">
+      <div class="sec-hd">
+        <div class="section-kicker">01 · Start with the offer</div>
+        <h2>Loan details</h2>
+        <p>Upload the lender's offer or Key Facts Statement. These are the terms you are being offered.</p>
+      </div>
+      <div class="sec-bd loan-upload">
+        <button class="btn btn-cyan upload-trigger" data-upload>
+          <svg class="i"><use href="#i-doc"/></svg><span>Upload loan document</span>
+        </button>
+        <div class="upload-note">Your existing 90-day sales history stays connected for the affordability check.</div>
+      </div>
+      <div class="sec-bd" id="doc-status"></div>
+      <div class="sec-bd">
+        <table class="kfs"><tbody id="kfs"></tbody></table>
+        <div class="cite">
+          RBI, 15 April 2024: "The KFS shall be written in a language understood by such borrowers."
+          Reading it aloud in Hindi is how this product answers that.
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec-coach">
+      <div class="sec-hd">
+        <h2>Repayment coach</h2>
+        <p>After disbursal, watches the settlement trend and escalates to a person before an installment is missed.</p>
+      </div>
+      <div class="sec-bd" id="coach">
+        <button class="btn btn-fill" id="btn-coach">Check settlement trend</button>
+      </div>
+    </section>
+
+    <section class="sec sec-soundbox">
+      <div class="sec-hd">
+        <h2>On the Paytm AI Soundbox</h2>
+        <p>Mock-up of the <strong>Paytm AI Soundbox</strong>, which has an integrated microphone and a voice assistant in 11 Indian languages, and already answers merchants on sales and collections. Loan Saathi is the same conversation on that device: the service is an HTTP API, so the Soundbox's own speech stack replaces ours. Consent still happens in the app, never by voice.</p>
+      </div>
+      <div class="sec-bd">
+        <div class="sbox" id="sbox">
+          <div class="sbox-hd"><span class="led"></span> Paytm AI Soundbox, हिंदी</div>
+          <div class="sbox-say" id="sb-say">&nbsp;</div>
+          <div class="bars" aria-hidden="true"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div class="veil" id="pin-modal" hidden role="dialog" aria-modal="true" aria-labelledby="pin-h">
+  <div class="dlg">
+    <h3 id="pin-h">Confirm in the app</h3>
+    <p id="pin-copy">Enter your Paytm PIN to send this request to the lender.</p>
+    <div class="pins">
+      <input type="password" inputmode="numeric" maxlength="1" aria-label="PIN digit 1">
+      <input type="password" inputmode="numeric" maxlength="1" aria-label="PIN digit 2">
+      <input type="password" inputmode="numeric" maxlength="1" aria-label="PIN digit 3">
+      <input type="password" inputmode="numeric" maxlength="1" aria-label="PIN digit 4">
+    </div>
+    <div class="dlg-err" id="pin-err" aria-live="assertive"></div>
+    <div class="dlg-hint">Demo PIN 1234</div>
+    <div class="btns">
+      <button class="btn btn-fill" id="pin-ok" style="flex:1">Confirm</button>
+      <button class="btn btn-line" id="pin-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="snack" id="snack" role="status" aria-live="polite"></div>
+<audio id="player" hidden></audio>
+
+<script src="/app.js"></script>
+</body>
+</html>
