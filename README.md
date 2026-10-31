@@ -1,0 +1,104 @@
+# Loan Saathi
+
+**The merchant loan that explains itself and stress-tests itself.**
+
+A voice-first, vernacular AI copilot for Paytm merchant lending.
+Paytm Build for India AI Hackathon, Delhi Edition · Track 2 · Team MegaByte.
+
+Paytm merchant loans are repaid by auto-deducting from the merchant's **daily settlement**. The
+offer screen shows the installment but never what happens in a slow week. Loan Saathi shows it,
+in Hindi, computed from the merchant's own sales, before they sign.
+
+1. **Explain**, reads the lender's offer and RBI Key Facts Statement aloud in Hindi
+2. **Stress-test**, *"अगर बिक्री 30% गिरी तो?"* replays the merchant's own 90 days of settlements
+3. **Coach**, after disbursal, flags a settlement dip and routes to a human before a payment is missed
+
+## Run it
+
+```bash
+python -m venv .venv
+. .venv/Scripts/activate          # Windows (Git Bash);  source .venv/bin/activate on macOS/Linux
+pip install -r requirements.txt
+python scripts/gen_data.py        # regenerate the synthetic dataset (seeded, reproducible)
+uvicorn app.main:app --reload --port 8080   # http://127.0.0.1:8080  ·  API docs at /docs
+pytest -q
+```
+
+### Getting a Sarvam key (optional, for voice)
+
+1. Go to **https://dashboard.sarvam.ai**. It redirects to the signed-in app at
+   `indus.sarvam.ai`, which is expected. Sign in or sign up.
+2. Verify your account. Sarvam's pricing page states verified users get Rs 100 of free credits
+   with no expiry, usable across all their APIs.
+3. In the dashboard, open the **API Keys** section and create a key. Copy it immediately;
+   it is shown once.
+4. Put it in `.env`:  `SARVAM_API_KEY=your_key_here`
+5. Check the cost before spending anything:
+
+   ```bash
+   python scripts/prerender.py          # dry run, prints the bill, spends nothing
+   python scripts/prerender.py --go     # renders the Hindi demo, about Rs 3.34 total
+   ```
+
+   The audio is cached by content hash in `data/audio/`, so replaying the demo afterwards is
+   free and works with the network off.
+
+**No API keys are needed.** The whole demo runs offline on deterministic Hindi templates and
+on-screen text. To add voice and the LLM fluency pass, copy `.env.example` to `.env`, set
+`SARVAM_API_KEY`, and set `LS_NARRATOR=sarvam`.
+
+## How it works
+
+```
+                    ┌──────────────────────────────────────────┐
+  voice / text  ──▶ │ intent.py   deterministic parser         │
+                    └──────────────────┬───────────────────────┘
+                                       ▼
+                    ┌──────────────────────────────────────────┐
+                    │ engine.py   simulate · rightsize · coach │  ← every number
+                    └──────────────────┬───────────────────────┘     originates here
+                                       ▼
+                    ┌──────────────────────────────────────────┐
+                    │ narrate.py  fixed Hindi/English strings  │  ← numbers are substituted in
+                    └──────────────────┬───────────────────────┘
+                                       ▼
+                         optional LLM rephrase (rejected if any number changed)
+                                       ▼
+                              voice.py  Sarvam TTS → WAV
+```
+
+**The language model never holds a number.** The engine computes, and the results are substituted
+into fixed sentences, so there is no code path by which a model can produce a rupee figure. An
+optional LLM pass may only rephrase a finished sentence, and a rephrasing that alters any numeral
+is discarded. That makes *"the LLM only explains, a deterministic engine does all the math"* a
+property of the architecture rather than a claim.
+
+Also: no AI credit decisions anywhere, consent requires an in-app PIN (never voice alone), and
+every action, including failed PIN attempts, lands in an audit trail.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `app/engine.py` | the simulator. stdlib only, pure functions, no I/O |
+| `app/narrate.py` | Hindi + English templates, Indian digit grouping, optional LLM polish |
+| `app/intent.py` | "अगर बिक्री तीस परसेंट गिरी तो?" → `{intent, shock_pct}`. No LLM |
+| `app/voice.py` | Sarvam `saaras:v4` STT and `bulbul:v3` TTS. Caches WAVs, never raises |
+| `app/main.py` | FastAPI, 9 routes plus the static UI, one process |
+| `web/` | `index.html`, `styles.css`, `app.js`. No framework, no build step |
+| `data/demo.json` | 90 synthetic settlements + mock lender offer + KFS rows |
+| `tests/test_engine.py` | 51 unit tests, including the three figures on deck slide 6 |
+| `tests/test_api.py` | 27 integration tests over the live HTTP surface, including the full demo |
+
+Docs: `mvp.md` (what this is and how to pitch it) · `docs/API-REFERENCE.md` (verified vendor
+facts) · `docs/DEMO-SCRIPT.md` (the 3-minute run and judge Q&A) · `docs/CONTEXT.md` · `docs/EVENT.md`.
+
+## Data
+
+All merchant, settlement and offer data is **synthetic**, generated by `scripts/gen_data.py`, and
+labelled as such in the UI. None of it is Paytm data. The generator self-calibrates so the dataset
+reproduces the pitch deck's figures exactly, **11.7% / 16.7% / 23.3%** burden at 0 / -30 / -50%
+sales, and `pytest` fails if it ever stops doing so.
+
+Voice by [Sarvam AI](https://sarvam.ai). Loan amounts, approval and restructuring are the lender's
+decisions.
